@@ -8,6 +8,7 @@ import {
     TextInput,
     KeyboardAvoidingView,
     Platform,
+    Image,
 } from 'react-native';
 import SettingsModal from '../components/SettingsModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,7 +21,7 @@ const HomeScreen = () => {
     const [message, setMessage] = useState('');
     const [settingsVisible, setSettingsVisible] = useState(false);
     const [ipAddress, setIpAddress] = useState('');
-    const [wakeWord, setWakeWord] = useState('');
+    const [modelName, setModelName] = useState('');
     const [verbose, setVerbose] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
     const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'checking'>('checking');
@@ -32,11 +33,11 @@ const HomeScreen = () => {
     useEffect(() => {
         const loadSettings = async () => {
             const savedIp = await AsyncStorage.getItem('llmIpAddress');
-            const savedWakeWord = await AsyncStorage.getItem('wakeWord');
+            const savedModel = await AsyncStorage.getItem('modelName');
             const savedVerbose = await AsyncStorage.getItem('verbose');
             const savedDarkMode = await AsyncStorage.getItem('darkMode');
             if (savedIp) setIpAddress(savedIp);
-            if (savedWakeWord) setWakeWord(savedWakeWord);
+            if (savedModel) setModelName(savedModel);
             if (savedVerbose) setVerbose(savedVerbose === 'true');
             if (savedDarkMode) setDarkMode(savedDarkMode === 'true');
         };
@@ -83,7 +84,8 @@ const HomeScreen = () => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model: 'qwen3:4b',
+                    // model name: like qwen3:4b
+                    model: modelName,
                     prompt: message,
                     stream: verbose,
                 }),
@@ -111,22 +113,22 @@ const HomeScreen = () => {
 
     const handleSaveSettings = async ({
         ipAddress,
-        wakeWord,
+        modelName,
         verbose,
         darkMode,
     }: {
         ipAddress: string;
-        wakeWord: string;
+        modelName: string;
         verbose: boolean;
         darkMode: boolean;
     }) => {
         setSettingsVisible(false);
         setIpAddress(ipAddress);
-        setWakeWord(wakeWord);
+        setModelName(modelName);
         setVerbose(verbose);
         setDarkMode(darkMode);
         await AsyncStorage.setItem('llmIpAddress', ipAddress);
-        await AsyncStorage.setItem('wakeWord', wakeWord);
+        await AsyncStorage.setItem('modelName', modelName);
         await AsyncStorage.setItem('verbose', verbose ? 'true' : 'false');
         await AsyncStorage.setItem('darkMode', darkMode ? 'true' : 'false');
         addLog('Settings saved.');
@@ -147,7 +149,14 @@ const HomeScreen = () => {
                         { backgroundColor: theme.card, borderBottomColor: theme.border },
                     ]}
                 >
-                    <Text style={[styles.title, { color: theme.text }]}>My-LLM</Text>
+                    <View style={styles.titleRow}>
+                        <Image
+                            source={require('../../assets/adaptive-icon.png')}
+                            style={styles.icon}
+                            resizeMode="contain"
+                        />
+                        <Text style={[styles.title, { color: theme.text }]}>LLM-mar</Text>
+                    </View>
                     <TouchableOpacity style={styles.hamburger} onPress={handleOpenSettings}>
                         <Ionicons name="menu" size={28} color={theme.text} />
                     </TouchableOpacity>
@@ -159,7 +168,7 @@ const HomeScreen = () => {
                     onSave={handleSaveSettings}
                     onDeleteLogs={handleDeleteLogs}
                     initialIpAddress={ipAddress}
-                    initialWakeWord={wakeWord}
+                    initialModelName={modelName}
                     initialVerbose={verbose}
                     initialDarkMode={darkMode}
                     theme={theme}
@@ -256,6 +265,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
+    },
+    titleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    icon: {
+        width: 50,
+        height: 50,
+        marginRight: 8,
     },
     title: { fontSize: 20, fontWeight: 'bold' },
     hamburger: { padding: 4 },

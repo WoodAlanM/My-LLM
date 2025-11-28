@@ -4,7 +4,6 @@ import {
     View,
     Text,
     TextInput,
-    Button,
     StyleSheet,
     Switch,
     TouchableOpacity,
@@ -61,6 +60,8 @@ const SettingsModal = ({
     }, [initialDarkMode, visible]);
 
     const modalTheme = localDarkMode ? darkTheme : lightTheme;
+
+    const styles = stylesCreate(modalTheme);
 
     return (
         <Modal visible={visible} transparent animationType="slide">
@@ -136,97 +137,182 @@ const SettingsModal = ({
                                 thumbColor={localDarkMode ? '#222' : '#eee'}
                             />
                         </View>
-                        <View style={{ height: 8 }} />
+                        <View style={styles.deleteRow}>
+                            <Text style={[styles.label, { color: modalTheme.text }]}>
+                                Delete Logs
+                            </Text>
+                            <TouchableOpacity onPress={onDeleteLogs}>
+                                <Text style={{ color: '#d9534f' }}>DELETE</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <View style={styles.card}>
+                        <View style={styles.buttonRow}>
+                            <TouchableOpacity
+                                style={[styles.fullButton, { marginRight: 8 }]}
+                                onPress={onCancel}
+                            >
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.fullButton}
+                                onPress={() =>
+                                    onSave({
+                                        ipAddress,
+                                        modelName,
+                                        verbose,
+                                        darkMode: localDarkMode,
+                                    })
+                                }
+                            >
+                                <Text style={styles.buttonText}>Save Settings</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                    <View style={styles.card}>
                         <TouchableOpacity
-                            style={[
-                                {
-                                    width: '100%',
-                                    backgroundColor: '#FFDD00',
-                                    paddingVertical: 12,
-                                    borderRadius: 6,
-                                    alignItems: 'center',
-                                    marginTop: 8,
-                                    marginBottom: 8,
-                                    shadowColor: '#000',
-                                    shadowOffset: { width: 0, height: 2 },
-                                    shadowOpacity: 0.08,
-                                    shadowRadius: 4,
-                                    elevation: 2,
-                                },
-                            ]}
+                            style={styles.githubButton}
+                            onPress={() =>
+                                Linking.openURL('https://github.com/WoodAlanM/My-LLM/issues')
+                            }
+                        >
+                            <Ionicons
+                                name="logo-github"
+                                size={22}
+                                color="#fff"
+                                style={{ marginRight: 8 }}
+                            />
+                            <Text style={styles.githubText}>Feature Requests / Bug Reports</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.coffeeButton}
                             onPress={() => Linking.openURL('https://buymeacoffee.com/woodalanmc')}
                         >
-                            <Text style={{ color: '#333', fontWeight: 'bold', fontSize: 16 }}>
-                                ☕ Buy Me a Coffee
-                            </Text>
+                            <Text style={styles.coffeeText}>☕ Buy Me a Coffee</Text>
                         </TouchableOpacity>
                     </View>
-                </View>
-                <View style={styles.buttonRow}>
-                    <Button title="Delete Logs" color="#d9534f" onPress={onDeleteLogs} />
-                </View>
-                <View style={styles.buttonRow}>
-                    <Button title="Cancel" onPress={onCancel} />
-                    <Button
-                        title="Save Settings"
-                        onPress={() =>
-                            onSave({
-                                ipAddress,
-                                modelName,
-                                verbose,
-                                darkMode: localDarkMode,
-                            })
-                        }
-                    />
                 </View>
             </View>
         </Modal>
     );
 };
 
-const styles = StyleSheet.create({
-    modal: {
-        width: '90%',
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 20,
-        elevation: 5,
-    },
-    header: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginBottom: 16,
-        textAlign: 'center',
-    },
-    label: {
-        fontSize: 14,
-        marginTop: 12,
-        marginBottom: 4,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 6,
-        padding: 8,
-        marginBottom: 8,
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 12,
-    },
-    togglesColumn: {
-        flexDirection: 'column',
-        marginTop: 12,
-        marginBottom: 4,
-        gap: 8,
-    },
-    toggleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 8,
-    },
-});
+const stylesCreate = (modalTheme: any) =>
+    StyleSheet.create({
+        modal: {
+            width: '90%',
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            padding: 20,
+            elevation: 5,
+        },
+        header: {
+            fontSize: 22,
+            fontWeight: 'bold',
+            marginBottom: 16,
+            textAlign: 'center',
+        },
+        label: {
+            fontSize: 14,
+            marginTop: 12,
+            marginBottom: 4,
+        },
+        input: {
+            borderWidth: 1,
+            borderColor: '#ccc',
+            borderRadius: 6,
+            padding: 8,
+            marginBottom: 8,
+        },
+        fullButton: {
+            flex: 1,
+            backgroundColor: '#007bff',
+            paddingVertical: 12,
+            borderRadius: 6,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        buttonText: {
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: 16,
+        },
+        buttonRow: {
+            width: '100%',
+            paddingTop: 8,
+            paddingBottom: 8,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+        },
+        deleteRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 8,
+            marginBottom: 4,
+        },
+        card: {
+            width: '100%',
+            backgroundColor: modalTheme.inputBackground,
+            borderRadius: 10,
+            padding: 12,
+            marginTop: 12,
+            marginBottom: 4,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.06,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+        githubButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            backgroundColor: '#24292e',
+            paddingVertical: 12,
+            borderRadius: 6,
+            marginBottom: 10,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+        githubText: {
+            color: '#fff',
+            fontWeight: 'bold',
+            fontSize: 16,
+        },
+        coffeeButton: {
+            width: '100%',
+            backgroundColor: '#FFDD00',
+            paddingVertical: 12,
+            borderRadius: 6,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 4,
+            elevation: 2,
+        },
+        coffeeText: {
+            color: '#333',
+            fontWeight: 'bold',
+            fontSize: 16,
+        },
+        togglesColumn: {
+            flexDirection: 'column',
+            marginTop: 12,
+            marginBottom: 4,
+            gap: 8,
+        },
+        toggleRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+        },
+    });
 
 export default SettingsModal;
