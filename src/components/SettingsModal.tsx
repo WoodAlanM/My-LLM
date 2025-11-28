@@ -41,8 +41,6 @@ const SettingsModal = ({
     const [ipAddress, setIpAddress] = useState(initialIpAddress);
     const [wakeWord, setWakeWord] = useState(initialWakeWord);
     const [verbose, setVerbose] = useState(initialVerbose);
-
-    // Local dark mode state for instant UI update
     const [localDarkMode, setLocalDarkMode] = useState(initialDarkMode);
 
     useEffect(() => {
@@ -61,7 +59,6 @@ const SettingsModal = ({
         setLocalDarkMode(initialDarkMode);
     }, [initialDarkMode, visible]);
 
-    // Use localDarkMode for modal theme
     const modalTheme = localDarkMode ? darkTheme : lightTheme;
 
     return (
@@ -110,25 +107,28 @@ const SettingsModal = ({
                         placeholderTextColor={modalTheme.inputText}
                         autoCapitalize="none"
                     />
-                    <View style={styles.toggleRow}>
-                        <Text style={[styles.label, { color: modalTheme.text }]}>Verbose</Text>
-                        <Switch
-                            value={verbose}
-                            onValueChange={setVerbose}
-                            thumbColor={verbose ? '#222' : '#eee'}
-                        />
-                    </View>
-                    <View style={styles.toggleRow}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons
-                                name={localDarkMode ? 'moon' : 'sunny'}
-                                size={22}
-                                color={modalTheme.text}
-                                style={{ marginRight: 8 }}
+                    {/* Toggles aligned in a column */}
+                    <View style={styles.togglesColumn}>
+                        <View style={styles.toggleRow}>
+                            <Text style={[styles.label, { color: modalTheme.text }]}>Verbose</Text>
+                            <Switch
+                                value={verbose}
+                                onValueChange={setVerbose}
+                                thumbColor={verbose ? '#222' : '#eee'}
                             />
-                            <Text style={{ color: modalTheme.text, marginRight: 8 }}>
-                                Dark Mode
-                            </Text>
+                        </View>
+                        <View style={styles.toggleRow}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Ionicons
+                                    name={localDarkMode ? 'moon' : 'sunny'}
+                                    size={22}
+                                    color={modalTheme.text}
+                                    style={{ marginRight: 8 }}
+                                />
+                                <Text style={{ color: modalTheme.text, marginRight: 8 }}>
+                                    Dark Mode
+                                </Text>
+                            </View>
                             <Switch
                                 value={localDarkMode}
                                 onValueChange={setLocalDarkMode}
@@ -190,12 +190,17 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         marginTop: 12,
     },
+    togglesColumn: {
+        flexDirection: 'column',
+        marginTop: 12,
+        marginBottom: 4,
+        gap: 8,
+    },
     toggleRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 12,
-        marginBottom: 4,
+        marginBottom: 8,
     },
 });
 

@@ -5,8 +5,9 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
-    Button,
     TextInput,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import SettingsModal from '../components/SettingsModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,25 +24,26 @@ const HomeScreen = () => {
     const [verbose, setVerbose] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
     const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+    const [inputHeight, setInputHeight] = useState(40);
     const scrollViewRef = useRef<ScrollView>(null);
 
     const theme = darkMode ? darkTheme : lightTheme;
 
     useEffect(() => {
-        // Load settings from AsyncStorage
         const loadSettings = async () => {
             const savedIp = await AsyncStorage.getItem('llmIpAddress');
             const savedWakeWord = await AsyncStorage.getItem('wakeWord');
             const savedVerbose = await AsyncStorage.getItem('verbose');
+            const savedDarkMode = await AsyncStorage.getItem('darkMode');
             if (savedIp) setIpAddress(savedIp);
             if (savedWakeWord) setWakeWord(savedWakeWord);
             if (savedVerbose) setVerbose(savedVerbose === 'true');
+            if (savedDarkMode) setDarkMode(savedDarkMode === 'true');
         };
         loadSettings();
     }, []);
 
     useEffect(() => {
-        // Ping backend if IP is present
         const pingServer = async () => {
             if (!ipAddress) {
                 setServerStatus('offline');
@@ -49,7 +51,6 @@ const HomeScreen = () => {
             }
             setServerStatus('checking');
             try {
-                // Use /api/tags for a lightweight ping, or /api/generate with a dummy prompt
                 const response = await fetch(`http://${ipAddress}:11434/api/tags`);
                 if (response.ok) {
                     setServerStatus('online');
@@ -88,7 +89,6 @@ const HomeScreen = () => {
                 }),
             });
             const text = await response.text();
-            // Split by newlines and parse each JSON object
             const lines = text.split('\n').filter(Boolean);
             let finalResponse = '';
             lines.forEach((line) => {
@@ -102,6 +102,7 @@ const HomeScreen = () => {
             addLog('Connection failed: ' + err);
         }
         setMessage('');
+        setInputHeight(40);
     };
 
     const handleOpenSettings = () => {
@@ -137,7 +138,7 @@ const HomeScreen = () => {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.safeViewBackground }}>
             <View style={[styles.container, { backgroundColor: theme.background }]}>
                 {/* Top Bar */}
                 <View
@@ -164,44 +165,56 @@ const HomeScreen = () => {
                     theme={theme}
                 />
                 {/* Logs */}
-                <View style={[styles.logContainer, { backgroundColor: theme.card }]}>
-                    <ScrollView ref={scrollViewRef} style={styles.logScroll}>
-                        {logs.map((log, idx) => (
-                            <Text
-                                key={idx}
-                                style={[styles.logText, { color: theme.logText }]}
-                                selectable
+                <KeyboardAvoidingView
+                    style={{ flex: 1 }}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={40}
+                >
+                    <View style={[styles.logContainer, { backgroundColor: theme.card }]}>
+                        <ScrollView ref={scrollViewRef} style={styles.logScroll}>
+                            {logs.map((log, idx) => (
+                                <Text
+                                    key={idx}
+                                    style={[styles.logText, { color: theme.logText }]}
+                                    selectable
+                                >
+                                    {log}
+                                </Text>
+                            ))}
+                        </ScrollView>
+                        {/* Send Message Feature */}
+                        <View style={styles.sendRow}>
+                            <TextInput
+                                style={[
+                                    styles.sendInput,
+                                    {
+                                        backgroundColor: theme.inputBackground,
+                                        color: theme.inputText,
+                                        borderColor: theme.border,
+                                        height: Math.max(40, Math.min(inputHeight, 90)),
+                                        textAlignVertical: 'top',
+                                    },
+                                ]}
+                                value={message}
+                                onChangeText={setMessage}
+                                placeholder="Type a message..."
+                                placeholderTextColor={theme.inputText}
+                                onSubmitEditing={handleSendMessage}
+                                returnKeyType="send"
+                                multiline
+                                onContentSizeChange={(e) =>
+                                    setInputHeight(e.nativeEvent.contentSize.height)
+                                }
+                            />
+                            <TouchableOpacity
+                                style={[styles.sendButton, { backgroundColor: theme.button }]}
+                                onPress={handleSendMessage}
                             >
-                                {log}
-                            </Text>
-                        ))}
-                    </ScrollView>
-                    {/* Send Message Feature */}
-                    <View style={styles.sendRow}>
-                        <TextInput
-                            style={[
-                                styles.sendInput,
-                                {
-                                    backgroundColor: theme.inputBackground,
-                                    color: theme.inputText,
-                                    borderColor: theme.border,
-                                },
-                            ]}
-                            value={message}
-                            onChangeText={setMessage}
-                            placeholder="Type a message..."
-                            placeholderTextColor={theme.inputText}
-                            onSubmitEditing={handleSendMessage}
-                            returnKeyType="send"
-                        />
-                        <TouchableOpacity
-                            style={[styles.sendButton, { backgroundColor: theme.button }]}
-                            onPress={handleSendMessage}
-                        >
-                            <Ionicons name="send" size={24} color="#fff" />
-                        </TouchableOpacity>
+                                <Ionicons name="send" size={24} color="#fff" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
                 {/* Server Status */}
                 <View
                     style={[
@@ -235,40 +248,20 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F0F0F0' },
+    container: { flex: 1 },
     topBar: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 16,
         paddingVertical: 12,
-        backgroundColor: '#fff',
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
     },
-    title: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+    title: { fontSize: 20, fontWeight: 'bold' },
     hamburger: { padding: 4 },
-    desc: {
-        fontSize: 14,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    card: {
-        margin: 20,
-        padding: 20,
-        borderRadius: 12,
-        backgroundColor: '#fff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-        alignItems: 'center',
-    },
     logContainer: {
         flex: 1,
         margin: 16,
-        backgroundColor: '#fff',
         borderRadius: 8,
         padding: 8,
         shadowColor: '#000',
@@ -283,36 +276,32 @@ const styles = StyleSheet.create({
     },
     logText: {
         fontSize: 13,
-        color: '#444',
         marginBottom: 4,
     },
     sendRow: {
         flexDirection: 'row',
-        alignItems: 'center',
+        alignItems: 'flex-start', // Align send button to top
         marginTop: 8,
     },
     sendInput: {
         flex: 1,
         borderWidth: 1,
-        borderColor: '#ccc',
         borderRadius: 20,
         paddingHorizontal: 12,
         paddingVertical: 8,
-        backgroundColor: '#f9f9f9',
         marginRight: 8,
+        minHeight: 40,
+        maxHeight: 90,
     },
     sendButton: {
-        backgroundColor: '#6200EE',
         borderRadius: 20,
         padding: 10,
         justifyContent: 'center',
         alignItems: 'center',
     },
     bottomBar: {
-        padding: 16,
-        backgroundColor: '#fff',
+        padding: 10,
         borderTopWidth: 1,
-        borderTopColor: '#eee',
     },
 });
 
