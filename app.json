@@ -22,12 +22,11 @@
             },
             "edgeToEdgeEnabled": true,
             "predictiveBackGestureEnabled": false,
-            "package": "com.anonymous.LLM-mar"
+            "package": "com.anonymous.llmmar"
         },
         "web": {
             "favicon": "./assets/favicon.png"
         },
-        "plugins": ["expo-speech-recognition"],
-        "theme": "@android:style/Theme.NoActionBar"
+        "plugins": ["expo-speech-recognition", "expo-font"]
     }
 }
