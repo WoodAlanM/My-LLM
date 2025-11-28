@@ -8,6 +8,7 @@ import {
     StyleSheet,
     Switch,
     TouchableOpacity,
+    Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { lightTheme, darkTheme } from '../utils/theme';
@@ -18,7 +19,7 @@ const SettingsModal = ({
     onSave,
     onDeleteLogs,
     initialIpAddress = '',
-    initialWakeWord = '',
+    initialModelName = '',
     initialVerbose = false,
     initialDarkMode = false,
     theme,
@@ -27,19 +28,19 @@ const SettingsModal = ({
     onCancel: () => void;
     onSave: (settings: {
         ipAddress: string;
-        wakeWord: string;
+        modelName: string;
         verbose: boolean;
         darkMode: boolean;
     }) => void;
     onDeleteLogs: () => void;
     initialIpAddress?: string;
-    initialWakeWord?: string;
+    initialModelName?: string;
     initialVerbose?: boolean;
     initialDarkMode?: boolean;
     theme: any;
 }) => {
     const [ipAddress, setIpAddress] = useState(initialIpAddress);
-    const [wakeWord, setWakeWord] = useState(initialWakeWord);
+    const [modelName, setModelName] = useState(initialModelName);
     const [verbose, setVerbose] = useState(initialVerbose);
     const [localDarkMode, setLocalDarkMode] = useState(initialDarkMode);
 
@@ -48,8 +49,8 @@ const SettingsModal = ({
     }, [initialIpAddress, visible]);
 
     useEffect(() => {
-        setWakeWord(initialWakeWord);
-    }, [initialWakeWord, visible]);
+        setModelName(initialModelName);
+    }, [initialModelName, visible]);
 
     useEffect(() => {
         setVerbose(initialVerbose);
@@ -91,7 +92,7 @@ const SettingsModal = ({
                         placeholderTextColor={modalTheme.inputText}
                         autoCapitalize="none"
                     />
-                    <Text style={[styles.label, { color: modalTheme.text }]}>Wake Word</Text>
+                    <Text style={[styles.label, { color: modalTheme.text }]}>Model Name</Text>
                     <TextInput
                         style={[
                             styles.input,
@@ -101,9 +102,9 @@ const SettingsModal = ({
                                 borderColor: modalTheme.border,
                             },
                         ]}
-                        value={wakeWord}
-                        onChangeText={setWakeWord}
-                        placeholder="Enter wake word"
+                        value={modelName}
+                        onChangeText={setModelName}
+                        placeholder="Enter model name"
                         placeholderTextColor={modalTheme.inputText}
                         autoCapitalize="none"
                     />
@@ -135,24 +136,48 @@ const SettingsModal = ({
                                 thumbColor={localDarkMode ? '#222' : '#eee'}
                             />
                         </View>
+                        <View style={{ height: 8 }} />
+                        <TouchableOpacity
+                            style={[
+                                {
+                                    width: '100%',
+                                    backgroundColor: '#FFDD00',
+                                    paddingVertical: 12,
+                                    borderRadius: 6,
+                                    alignItems: 'center',
+                                    marginTop: 8,
+                                    marginBottom: 8,
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 2 },
+                                    shadowOpacity: 0.08,
+                                    shadowRadius: 4,
+                                    elevation: 2,
+                                },
+                            ]}
+                            onPress={() => Linking.openURL('https://buymeacoffee.com/woodalanmc')}
+                        >
+                            <Text style={{ color: '#333', fontWeight: 'bold', fontSize: 16 }}>
+                                ☕ Buy Me a Coffee
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-                    <View style={styles.buttonRow}>
-                        <Button title="Delete Logs" color="#d9534f" onPress={onDeleteLogs} />
-                    </View>
-                    <View style={styles.buttonRow}>
-                        <Button title="Cancel" onPress={onCancel} />
-                        <Button
-                            title="Save Settings"
-                            onPress={() =>
-                                onSave({
-                                    ipAddress,
-                                    wakeWord,
-                                    verbose,
-                                    darkMode: localDarkMode,
-                                })
-                            }
-                        />
-                    </View>
+                </View>
+                <View style={styles.buttonRow}>
+                    <Button title="Delete Logs" color="#d9534f" onPress={onDeleteLogs} />
+                </View>
+                <View style={styles.buttonRow}>
+                    <Button title="Cancel" onPress={onCancel} />
+                    <Button
+                        title="Save Settings"
+                        onPress={() =>
+                            onSave({
+                                ipAddress,
+                                modelName,
+                                verbose,
+                                darkMode: localDarkMode,
+                            })
+                        }
+                    />
                 </View>
             </View>
         </Modal>
