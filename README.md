@@ -26,9 +26,9 @@ LLM-mar is a mobile application for Android designed to help make it easier to c
 3. The main screen should show a server status. If the server is online, you can send your prompts as you would if you were interacting with your LLM in at your desktop.
 
 <p align="center">
-  <img src="screenshots/main-screen.jpg" alt="Main screen" width="300" />
-  <img src="screenshots/prompt.jpg" alt="Prompt" width="300" />
-  <img src="screenshots/prompt-and-response.jpg" alt="Prompt and response" width="300" />
+  <img src="screenshots/main-screen.jpg" alt="Main screen" width="200" />
+  <img src="screenshots/prompt.jpg" alt="Prompt" width="200" />
+  <img src="screenshots/prompt-and-response.jpg" alt="Prompt and response" width="200" />
 </p>
 
 ## Settings
