@@ -13,7 +13,11 @@
             "backgroundColor": "#ffffff"
         },
         "ios": {
-            "supportsTablet": true
+            "supportsTablet": true,
+            "infoPlist": {
+                "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
+                "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone."
+            }
         },
         "android": {
             "adaptiveIcon": {
@@ -22,11 +26,17 @@
             },
             "edgeToEdgeEnabled": true,
             "predictiveBackGestureEnabled": false,
-            "package": "com.anonymous.llmmar"
+            "package": "com.anonymous.llmmar",
+            "permissions": ["android.permission.RECORD_AUDIO"]
         },
         "web": {
             "favicon": "./assets/favicon.png"
         },
-        "plugins": ["expo-speech-recognition", "expo-font"]
+        "plugins": ["expo-speech-recognition", "expo-font", "expo-build-properties"],
+        "extra": {
+            "eas": {
+                "projectId": "3da2797d-d772-47e0-b3ef-694cc2f3a52f"
+            }
+        }
     }
 }
