@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { lightTheme, darkTheme } from '../utils/theme';
+import ConnectionCard from '../components/ConnectionCard';
 
 const HomeScreen = () => {
     const [logs, setLogs] = useState<string[]>([]);
@@ -24,11 +25,12 @@ const HomeScreen = () => {
     const [modelName, setModelName] = useState('');
     const [verbose, setVerbose] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
-    const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'checking'>('checking');
     const [inputHeight, setInputHeight] = useState(40);
     const scrollViewRef = useRef<ScrollView>(null);
 
     const theme = darkMode ? darkTheme : lightTheme;
+
+    // Add changes to make the send message thing work better with keyboard avoiding stuff.
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -43,27 +45,6 @@ const HomeScreen = () => {
         };
         loadSettings();
     }, []);
-
-    useEffect(() => {
-        const pingServer = async () => {
-            if (!ipAddress) {
-                setServerStatus('offline');
-                return;
-            }
-            setServerStatus('checking');
-            try {
-                const response = await fetch(`http://${ipAddress}:11434/api/tags`);
-                if (response.ok) {
-                    setServerStatus('online');
-                } else {
-                    setServerStatus('offline');
-                }
-            } catch {
-                setServerStatus('offline');
-            }
-        };
-        pingServer();
-    }, [ipAddress]);
 
     const addLog = (msg: string) => {
         setLogs((prev) => [...prev, msg]);
@@ -177,9 +158,16 @@ const HomeScreen = () => {
                 <KeyboardAvoidingView
                     style={{ flex: 1 }}
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={40}
+                    keyboardVerticalOffset={20}
                 >
-                    <View style={[styles.logContainer, { backgroundColor: theme.card }]}>
+                    <ConnectionCard ipAddress={ipAddress} theme={theme} />
+
+                    <View
+                        style={[
+                            styles.logContainer,
+                            { backgroundColor: theme.card, borderColor: theme.border },
+                        ]}
+                    >
                         <ScrollView ref={scrollViewRef} style={styles.logScroll}>
                             {logs.map((log, idx) => (
                                 <Text
@@ -224,33 +212,6 @@ const HomeScreen = () => {
                         </View>
                     </View>
                 </KeyboardAvoidingView>
-                {/* Server Status */}
-                <View
-                    style={[
-                        styles.bottomBar,
-                        { backgroundColor: theme.card, borderTopColor: theme.border },
-                    ]}
-                >
-                    <Text
-                        style={{
-                            fontSize: 16,
-                            fontWeight: 'bold',
-                            color:
-                                serverStatus === 'online'
-                                    ? 'green'
-                                    : serverStatus === 'offline'
-                                    ? 'red'
-                                    : 'orange',
-                            textAlign: 'center',
-                        }}
-                    >
-                        {serverStatus === 'checking'
-                            ? 'Checking server...'
-                            : serverStatus === 'online'
-                            ? 'Server Online'
-                            : 'Server Offline'}
-                    </Text>
-                </View>
             </View>
         </SafeAreaView>
     );
@@ -279,8 +240,10 @@ const styles = StyleSheet.create({
     hamburger: { padding: 4 },
     logContainer: {
         flex: 1,
-        margin: 16,
+        marginHorizontal: 16,
+        marginBottom: 16,
         borderRadius: 8,
+        borderWidth: 1,
         padding: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
@@ -304,7 +267,7 @@ const styles = StyleSheet.create({
     sendInput: {
         flex: 1,
         borderWidth: 1,
-        borderRadius: 20,
+        borderRadius: 10,
         paddingHorizontal: 12,
         paddingVertical: 8,
         marginRight: 8,
@@ -312,7 +275,7 @@ const styles = StyleSheet.create({
         maxHeight: 90,
     },
     sendButton: {
-        borderRadius: 20,
+        borderRadius: 10,
         padding: 10,
         justifyContent: 'center',
         alignItems: 'center',
