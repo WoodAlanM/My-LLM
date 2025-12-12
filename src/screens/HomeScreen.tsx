@@ -30,8 +30,6 @@ const HomeScreen = () => {
 
     const theme = darkMode ? darkTheme : lightTheme;
 
-    // Add changes to make the send message thing work better with keyboard avoiding stuff.
-
     useEffect(() => {
         const loadSettings = async () => {
             const savedIp = await AsyncStorage.getItem('llmIpAddress');
@@ -121,27 +119,29 @@ const HomeScreen = () => {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor: theme.safeViewBackground }}>
+        <View style={{ flex: 1, backgroundColor: theme.safeViewBackground }}>
             <View style={[styles.container, { backgroundColor: theme.background }]}>
                 {/* Top Bar */}
-                <View
-                    style={[
-                        styles.topBar,
-                        { backgroundColor: theme.card, borderBottomColor: theme.border },
-                    ]}
-                >
-                    <View style={styles.titleRow}>
-                        <Image
-                            source={require('../../assets/adaptive-icon.png')}
-                            style={styles.icon}
-                            resizeMode="contain"
-                        />
-                        <Text style={[styles.title, { color: theme.text }]}>LLM-mar</Text>
+                <SafeAreaView edges={['top']} style={{ backgroundColor: theme.safeViewBackground }}>
+                    <View
+                        style={[
+                            styles.topBar,
+                            { backgroundColor: theme.card, borderBottomColor: theme.border },
+                        ]}
+                    >
+                        <View style={styles.titleRow}>
+                            <Image
+                                source={require('../../assets/adaptive-icon.png')}
+                                style={styles.icon}
+                                resizeMode="contain"
+                            />
+                            <Text style={[styles.title, { color: theme.text }]}>LLM-mar</Text>
+                        </View>
+                        <TouchableOpacity style={styles.hamburger} onPress={handleOpenSettings}>
+                            <Ionicons name="menu" size={28} color={theme.text} />
+                        </TouchableOpacity>
                     </View>
-                    <TouchableOpacity style={styles.hamburger} onPress={handleOpenSettings}>
-                        <Ionicons name="menu" size={28} color={theme.text} />
-                    </TouchableOpacity>
-                </View>
+                </SafeAreaView>
                 {/* Settings Modal */}
                 <SettingsModal
                     visible={settingsVisible}
@@ -155,32 +155,44 @@ const HomeScreen = () => {
                     theme={theme}
                 />
                 {/* Logs */}
-                <KeyboardAvoidingView
-                    style={{ flex: 1 }}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={20}
+                <View
+                    style={[
+                        styles.logContainer,
+                        { backgroundColor: theme.card, borderColor: theme.border },
+                    ]}
                 >
-                    <ConnectionCard ipAddress={ipAddress} theme={theme} />
-
-                    <View
-                        style={[
-                            styles.logContainer,
-                            { backgroundColor: theme.card, borderColor: theme.border },
-                        ]}
+                    <ScrollView
+                        ref={scrollViewRef}
+                        style={styles.logScroll}
+                        contentContainerStyle={{ paddingBottom: 70 }}
                     >
-                        <ScrollView ref={scrollViewRef} style={styles.logScroll}>
-                            {logs.map((log, idx) => (
-                                <Text
-                                    key={idx}
-                                    style={[styles.logText, { color: theme.logText }]}
-                                    selectable
-                                >
-                                    {log}
-                                </Text>
-                            ))}
-                        </ScrollView>
-                        {/* Send Message Feature */}
-                        <View style={styles.sendRow}>
+                        {logs.map((log, idx) => (
+                            <Text
+                                key={idx}
+                                style={[styles.logText, { color: theme.logText }]}
+                                selectable
+                            >
+                                {log}
+                            </Text>
+                        ))}
+                    </ScrollView>
+                </View>
+                {/* Message Box */}
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={0}
+                    style={styles.messageBoxAvoiding}
+                >
+                    <SafeAreaView
+                        edges={['bottom']}
+                        style={{ backgroundColor: theme.safeViewBackground }}
+                    >
+                        <View
+                            style={[
+                                styles.messageBox,
+                                { backgroundColor: theme.card, borderTopColor: theme.border },
+                            ]}
+                        >
                             <TextInput
                                 style={[
                                     styles.sendInput,
@@ -188,8 +200,6 @@ const HomeScreen = () => {
                                         backgroundColor: theme.inputBackground,
                                         color: theme.inputText,
                                         borderColor: theme.border,
-                                        height: Math.max(40, Math.min(inputHeight, 90)),
-                                        textAlignVertical: 'top',
                                     },
                                 ]}
                                 value={message}
@@ -199,9 +209,6 @@ const HomeScreen = () => {
                                 onSubmitEditing={handleSendMessage}
                                 returnKeyType="send"
                                 multiline
-                                onContentSizeChange={(e) =>
-                                    setInputHeight(e.nativeEvent.contentSize.height)
-                                }
                             />
                             <TouchableOpacity
                                 style={[styles.sendButton, { backgroundColor: theme.button }]}
@@ -210,10 +217,10 @@ const HomeScreen = () => {
                                 <Ionicons name="send" size={24} color="#fff" />
                             </TouchableOpacity>
                         </View>
-                    </View>
+                    </SafeAreaView>
                 </KeyboardAvoidingView>
             </View>
-        </SafeAreaView>
+        </View>
     );
 };
 
@@ -241,7 +248,7 @@ const styles = StyleSheet.create({
     logContainer: {
         flex: 1,
         marginHorizontal: 16,
-        marginBottom: 16,
+        marginTop: 8,
         borderRadius: 8,
         borderWidth: 1,
         padding: 8,
@@ -259,11 +266,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         marginBottom: 4,
     },
-    sendRow: {
-        flexDirection: 'row',
-        alignItems: 'flex-start', // Align send button to top
-        marginTop: 8,
-    },
     sendInput: {
         flex: 1,
         borderWidth: 1,
@@ -280,8 +282,16 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    bottomBar: {
-        padding: 10,
+    messageBoxAvoiding: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+    },
+    messageBox: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        padding: 8,
         borderTopWidth: 1,
     },
 });
