@@ -9,11 +9,13 @@ import {
     KeyboardAvoidingView,
     Platform,
     Image,
+    Keyboard,
 } from 'react-native';
 import SettingsModal from '../components/SettingsModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { lightTheme, darkTheme } from '../utils/theme';
 import ConnectionCard from '../components/ConnectionCard';
 
@@ -25,8 +27,10 @@ const HomeScreen = () => {
     const [modelName, setModelName] = useState('');
     const [verbose, setVerbose] = useState(false);
     const [darkMode, setDarkMode] = useState(false);
-    const [inputHeight, setInputHeight] = useState(40);
     const scrollViewRef = useRef<ScrollView>(null);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const [inputHeight, setInputHeight] = useState(40);
 
     const theme = darkMode ? darkTheme : lightTheme;
 
@@ -43,6 +47,26 @@ const HomeScreen = () => {
         };
         loadSettings();
     }, []);
+
+    useEffect(() => {
+        const show = Keyboard.addListener('keyboardDidShow', (e) => {
+            setKeyboardVisible(true);
+            setKeyboardHeight(e.endCoordinates.height);
+        });
+        const hide = Keyboard.addListener('keyboardDidHide', (e) => {
+            setKeyboardVisible(false);
+            setKeyboardHeight(0);
+        });
+
+        return () => {
+            show.remove();
+            hide.remove();
+        };
+    }, []);
+
+    const handleContextSizeChange = (event: any) => {
+        setInputHeight(Math.min(event.nativeEvent.contentSize.height, 90));
+    };
 
     const addLog = (msg: string) => {
         setLogs((prev) => [...prev, msg]);
@@ -83,7 +107,6 @@ const HomeScreen = () => {
             addLog('Connection failed: ' + err);
         }
         setMessage('');
-        setInputHeight(40);
     };
 
     const handleOpenSettings = () => {
@@ -113,6 +136,8 @@ const HomeScreen = () => {
         addLog('Settings saved.');
     };
 
+    const insets = useSafeAreaInsets();
+
     const handleDeleteLogs = () => {
         setLogs([]);
         addLog('Logs deleted.');
@@ -120,40 +145,48 @@ const HomeScreen = () => {
 
     return (
         <View style={{ flex: 1, backgroundColor: theme.safeViewBackground }}>
-            <View style={[styles.container, { backgroundColor: theme.background }]}>
-                {/* Top Bar */}
-                <SafeAreaView edges={['top']} style={{ backgroundColor: theme.safeViewBackground }}>
-                    <View
-                        style={[
-                            styles.topBar,
-                            { backgroundColor: theme.card, borderBottomColor: theme.border },
-                        ]}
-                    >
-                        <View style={styles.titleRow}>
-                            <Image
-                                source={require('../../assets/adaptive-icon.png')}
-                                style={styles.icon}
-                                resizeMode="contain"
-                            />
-                            <Text style={[styles.title, { color: theme.text }]}>LLM-mar</Text>
-                        </View>
-                        <TouchableOpacity style={styles.hamburger} onPress={handleOpenSettings}>
-                            <Ionicons name="menu" size={28} color={theme.text} />
-                        </TouchableOpacity>
+            {/* Top Safe Area ONLY */}
+            <SafeAreaView edges={['top']} style={{ backgroundColor: theme.safeViewBackground }}>
+                <View
+                    style={[
+                        styles.topBar,
+                        { backgroundColor: theme.card, borderBottomColor: theme.border },
+                    ]}
+                >
+                    <View style={styles.titleRow}>
+                        <Image
+                            source={require('../../assets/adaptive-icon.png')}
+                            style={styles.icon}
+                            resizeMode="contain"
+                        />
+                        <Text style={[styles.title, { color: theme.text }]}>LLM-mar</Text>
                     </View>
-                </SafeAreaView>
-                {/* Settings Modal */}
-                <SettingsModal
-                    visible={settingsVisible}
-                    onCancel={() => setSettingsVisible(false)}
-                    onSave={handleSaveSettings}
-                    onDeleteLogs={handleDeleteLogs}
-                    initialIpAddress={ipAddress}
-                    initialModelName={modelName}
-                    initialVerbose={verbose}
-                    initialDarkMode={darkMode}
-                    theme={theme}
-                />
+
+                    <TouchableOpacity style={styles.hamburger} onPress={handleOpenSettings}>
+                        <Ionicons name="menu" size={28} color={theme.text} />
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+
+            {/* Settings Modal */}
+            <SettingsModal
+                visible={settingsVisible}
+                onCancel={() => setSettingsVisible(false)}
+                onSave={handleSaveSettings}
+                onDeleteLogs={handleDeleteLogs}
+                initialIpAddress={ipAddress}
+                initialModelName={modelName}
+                initialVerbose={verbose}
+                initialDarkMode={darkMode}
+                theme={theme}
+            />
+
+            {/* Keyboard-aware body */}
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            >
                 {/* Logs */}
                 <View
                     style={[
@@ -163,63 +196,64 @@ const HomeScreen = () => {
                 >
                     <ScrollView
                         ref={scrollViewRef}
-                        style={styles.logScroll}
-                        contentContainerStyle={{ paddingBottom: 70 }}
+                        contentContainerStyle={{ paddingBottom: 12 }}
+                        keyboardShouldPersistTaps="handled"
                     >
                         {logs.map((log, idx) => (
-                            <Text
-                                key={idx}
-                                style={[styles.logText, { color: theme.logText }]}
-                                selectable
-                            >
+                            <Text key={idx} style={[styles.logText, { color: theme.logText }]}>
                                 {log}
                             </Text>
                         ))}
                     </ScrollView>
                 </View>
-                {/* Message Box */}
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    keyboardVerticalOffset={0}
-                    style={styles.messageBoxAvoiding}
+
+                {/* Need to keep going from here. The issue is that the TextInput
+                padding bottom is not proportional to the input height so it is
+                growing faster than the input itself. This is causing the layout
+                to look off as the TextInput grows.
+                */}
+
+                {/* Message Input */}
+                <View
+                    style={[
+                        styles.messageBox,
+                        {
+                            backgroundColor: theme.card,
+                            borderTopColor: theme.border,
+                            paddingBottom: keyboardVisible
+                                ? keyboardHeight + inputHeight / 1.25 + 20
+                                : insets.bottom + 8,
+                        },
+                    ]}
                 >
-                    <SafeAreaView
-                        edges={['bottom']}
-                        style={{ backgroundColor: theme.safeViewBackground }}
+                    <TextInput
+                        style={[
+                            styles.sendInput,
+                            {
+                                backgroundColor: theme.inputBackground,
+                                color: theme.inputText,
+                                borderColor: theme.border,
+                                height: inputHeight,
+                            },
+                        ]}
+                        value={message}
+                        onChangeText={setMessage}
+                        placeholder="Type a message..."
+                        placeholderTextColor={theme.inputText}
+                        onSubmitEditing={handleSendMessage}
+                        returnKeyType="send"
+                        multiline
+                        onContentSizeChange={handleContextSizeChange}
+                    />
+
+                    <TouchableOpacity
+                        style={[styles.sendButton, { backgroundColor: theme.button }]}
+                        onPress={handleSendMessage}
                     >
-                        <View
-                            style={[
-                                styles.messageBox,
-                                { backgroundColor: theme.card, borderTopColor: theme.border },
-                            ]}
-                        >
-                            <TextInput
-                                style={[
-                                    styles.sendInput,
-                                    {
-                                        backgroundColor: theme.inputBackground,
-                                        color: theme.inputText,
-                                        borderColor: theme.border,
-                                    },
-                                ]}
-                                value={message}
-                                onChangeText={setMessage}
-                                placeholder="Type a message..."
-                                placeholderTextColor={theme.inputText}
-                                onSubmitEditing={handleSendMessage}
-                                returnKeyType="send"
-                                multiline
-                            />
-                            <TouchableOpacity
-                                style={[styles.sendButton, { backgroundColor: theme.button }]}
-                                onPress={handleSendMessage}
-                            >
-                                <Ionicons name="send" size={24} color="#fff" />
-                            </TouchableOpacity>
-                        </View>
-                    </SafeAreaView>
-                </KeyboardAvoidingView>
-            </View>
+                        <Ionicons name="send" size={24} color="#fff" />
+                    </TouchableOpacity>
+                </View>
+            </KeyboardAvoidingView>
         </View>
     );
 };
@@ -248,7 +282,8 @@ const styles = StyleSheet.create({
     logContainer: {
         flex: 1,
         marginHorizontal: 16,
-        marginTop: 8,
+        marginTop: 16,
+        marginBottom: 16,
         borderRadius: 8,
         borderWidth: 1,
         padding: 8,
@@ -283,15 +318,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     messageBoxAvoiding: {
-        position: 'absolute',
         left: 0,
         right: 0,
         bottom: 0,
     },
     messageBox: {
         flexDirection: 'row',
-        alignItems: 'flex-end',
+        alignItems: 'flex-start',
         padding: 8,
+        paddingBottom: 15,
         borderTopWidth: 1,
     },
 });
